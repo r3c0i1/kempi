@@ -6,10 +6,11 @@ import kotlinx.serialization.Serializable
 object LoginRoute
 
 @Serializable
-class TwoFactorRoute(
-    val login: String
-) {
+object TwoFactorRoute {
 }
 
 @Serializable
 object MainRoute
+
+@Serializable
+object AuthGraph

@@ -31,32 +31,27 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.hilt.navigation.compose.hiltViewModel
-import com.r3c0i1.kempa.features.auth.presentation.LoginUiState
-import com.r3c0i1.kempa.features.auth.presentation.LoginViewModel
 import com.r3c0i1.kempa.features.auth.presentation.component.BouncingDotsIndicator
 import com.r3c0i1.kempa.features.auth.presentation.component.AuthHeader
 import com.r3c0i1.kempa.features.auth.presentation.component.AuthInputCard
 import com.r3c0i1.kempa.features.auth.presentation.component.ErrorBanner
+import com.r3c0i1.kempa.features.auth.presentation.viewmodel.AuthState
+import com.r3c0i1.kempa.features.auth.presentation.viewmodel.AuthStatus
+import com.r3c0i1.kempa.features.auth.presentation.viewmodel.AuthViewModel
 
 @Composable
 fun LoginScreen(
-    viewModel: LoginViewModel = hiltViewModel(),
+    viewModel: AuthViewModel,
     onSuccessLogin: () -> Unit = {},
-    onNavigateTo2FA: (login: String) -> Unit = {}
+    onNavigateTo2FA: () -> Unit = {}
 ) {
-    val state by viewModel.uiState.collectAsState()
+    val state by viewModel.state.collectAsState()
 
-    LaunchedEffect(state.isSuccess) {
-        if (state.isSuccess) {
-            onSuccessLogin()
-        }
-    }
-
-    LaunchedEffect(state.requires2FALogin) {
-        state.requires2FALogin?.let { login ->
-            onNavigateTo2FA(login)
-            viewModel.on2FANavigated()
+    LaunchedEffect(state.status) {
+        when (state.status) {
+            AuthStatus.SUCCESS -> onSuccessLogin()
+            AuthStatus.REQUIRED_2FA -> onNavigateTo2FA()
+            else -> Unit
         }
     }
 
@@ -68,11 +63,13 @@ fun LoginScreen(
 
 @Composable
 fun LoginContent(
-    state: LoginUiState,
+    state: AuthState,
     onLoginSubmit: (String, String) -> Unit
 ) {
     val loginState = rememberTextFieldState()
     val passwordState = rememberTextFieldState()
+
+    val isLoading = state.status == AuthStatus.LOADING
 
     fun submit() {
         onLoginSubmit(
@@ -116,7 +113,7 @@ fun LoginContent(
 
             Button(
                 onClick = ::submit,
-                enabled = !state.isLoading,
+                enabled = !isLoading,
                 modifier = Modifier
                     .fillMaxWidth()
                     .widthIn(max = 400.dp)
@@ -124,7 +121,7 @@ fun LoginContent(
                 shape = CircleShape
             ) {
                 AnimatedContent(
-                    targetState = state.isLoading,
+                    targetState = isLoading,
                     transitionSpec = {
                         fadeIn(animationSpec = tween(200)) togetherWith
                                 fadeOut(animationSpec = tween(200))

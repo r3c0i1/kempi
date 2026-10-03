@@ -32,27 +32,29 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
-import com.r3c0i1.kempa.features.auth.presentation.TwoFactorViewModel
+import com.r3c0i1.kempa.features.auth.presentation.viewmodel.AuthStatus
+import com.r3c0i1.kempa.features.auth.presentation.viewmodel.AuthViewModel
 import kotlinx.coroutines.delay
+import kotlin.time.Duration.Companion.milliseconds
 
 @Composable
 fun TwoFactorScreen(
     onBackClick: () -> Unit,
     onSuccessAuth: () -> Unit,
-    viewModel: TwoFactorViewModel = hiltViewModel()
+    viewModel: AuthViewModel
 ) {
-    val state by viewModel.uiState.collectAsState()
+    val state by viewModel.state.collectAsState()
     val otpState = rememberTextFieldState()
 
     val shakeOffset = remember { Animatable(0f) }
 
-    val isError = state.errorMessage != null
-    val isSuccess = state.isSuccess
+    val isError = state.status == AuthStatus.FAILURE
+    val isSuccess = state.status == AuthStatus.SUCCESS
+    val isLoading = state.status == AuthStatus.LOADING
 
     LaunchedEffect(otpState.text.toString()) {
         val code = otpState.text.toString()
-        if (code.length == 6 && !state.isLoading && !isSuccess) {
+        if (code.length == 6 && !isLoading && !isSuccess) {
             viewModel.submitCode(code)
         }
     }
@@ -75,7 +77,7 @@ fun TwoFactorScreen(
                 }
             )
 
-            delay(800L)
+            delay(800L.milliseconds)
 
             otpState.clearText()
 
@@ -84,7 +86,7 @@ fun TwoFactorScreen(
 
     LaunchedEffect(isSuccess) {
         if (isSuccess) {
-            delay(500)
+            delay(500.milliseconds)
             onSuccessAuth()
         }
     }
@@ -107,7 +109,10 @@ fun TwoFactorScreen(
                 horizontalArrangement = Arrangement.Start
             ) {
                 IconButton(
-                    onClick = onBackClick,
+                    onClick = {
+                        viewModel.on2FANavigated()
+                        onBackClick()
+                    },
                     modifier = Modifier
                         .size(42.dp)
                         .clip(CircleShape)

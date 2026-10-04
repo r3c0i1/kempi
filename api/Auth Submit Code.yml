@@ -1,0 +1,29 @@
+info:
+  name: Auth Submit Code
+  type: http
+  seq: 3
+
+http:
+  method: POST
+  url: https://api-next.kemsu.ru/api/security/auth/auth-by-code
+  headers:
+    - name: referer
+      value: https://eios.kemsu.ru/
+    - name: user-agent
+      value: Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/153.0.0.0 Safari/537.36
+  body:
+    type: json
+    data: |-
+      {
+        "login": "nockerox",
+        "code": "579554",
+        "lifetime": "3m"
+      }
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+  forwardAuthorizationHeader: false
